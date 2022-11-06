@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import random
 from typing import Dict
 
 import requests.adapters
@@ -88,13 +89,25 @@ class ElgatoApi:
             response = self._session.put(self._endpoints.lights, json={'lights': [data]})
             response.raise_for_status()
 
+    def toggle_random(self):
+        data = self.get_light_raw()
+        for i in range(500):
+            data['hue'] = random.randint(0, 359)
+            print(json.dumps(data))
+            response = self._session.put(self._endpoints.lights, json={'lights': [data]})
+            response.raise_for_status()
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base-url', default=os.getenv('BASE_URL', 'http://192.168.178.64:9123'))
+    parser.add_argument('--random', default=False, action='store_true')
     args = parser.parse_args()
     api = ElgatoApi(args.base_url)
     while True:
+      if args.random:
+        api.toggle_random()
+      else:
         api.toggle_lights()
 
 
