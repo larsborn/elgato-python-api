@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import random
+import yaml, sys
 from typing import Dict
 
 import requests.adapters
@@ -65,11 +66,19 @@ class Endpoints:
         }
         """
 
+class ElgatoConfig:
+    def __init__(self, yml_config: dict):
+        self._ip = yml_config['ip']
+        self.base_url = f"http://{self._ip}:9123"
+        self._colors = yml_config['colors']
+        self._mode = yml_config['mode']
+        self.verbose = yml_config['verbose']
 
 class ElgatoApi:
-    def __init__(self, base_url: str, light_id: int = 0):
-        self._endpoints = Endpoints(base_url)
-        self._light_id = light_id
+    def __init__(self, config: ElgatoConfig):
+        self._endpoints = Endpoints(config.base_url)
+        self._light_id = 0
+        self._verbose = config.verbose
 
         self._session = requests.session()
         self._session.mount('https://', FixedTimeoutAdapter())
@@ -97,19 +106,33 @@ class ElgatoApi:
             response = self._session.put(self._endpoints.lights, json={'lights': [data]})
             response.raise_for_status()
 
+    def run(self):
+        while True:
+            data = self.get_light_raw()
+            for i in range(360):
+                if (self._verbose):
+                    print(json.dumps(data))
+                data['hue'] = i
+                response = self._session.put(self._endpoints.lights, json={'lights': [data]})
+                response.raise_for_status()
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--base-url', default=os.getenv('BASE_URL', 'http://192.168.178.64:9123'))
-    parser.add_argument('--random', default=False, action='store_true')
+    parser.add_argument('--config', default='config.yml')
+    parser.add_argument('--mode', default='rotate')
     args = parser.parse_args()
-    api = ElgatoApi(args.base_url)
-    while True:
-      if args.random:
-        api.toggle_random()
-      else:
-        api.toggle_lights()
 
+    if not os.path.exists(args.config):
+        print(f"could not find config file {args.config}. Exiting")
+        sys.exit(1)
+
+    with open(args.config, "r") as f:
+        yml_config = yaml.safe_load(f)
+        conf = ElgatoConfig(yml_config)
+
+    api = ElgatoApi(conf)
+    api.run()
 
 if __name__ == '__main__':
     main()
