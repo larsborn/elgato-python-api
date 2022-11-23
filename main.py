@@ -67,18 +67,30 @@ class Endpoints:
         """
 
 class ElgatoConfig:
-    def __init__(self, yml_config: dict):
+    def __init__(self, yml_config: dict, mode: str):
         self._ip = yml_config['ip']
         self.base_url = f"http://{self._ip}:9123"
         self._colors = yml_config['colors']
-        self._mode = yml_config['mode']
+        self._mode = yml_config['modes'][mode]
+        self._hue_change_type = self.mode['type']
         self.verbose = yml_config['verbose']
+
+    def get_next_hue(self, hue: int):
+        if self._hue_change_type == 'random':
+            return random.randint(0, 359)
+        if self._hue_change_type == 'rotate':
+            return (hue + 1) % 360
+        if self._hue_change_type == 'linear':
+            # TODO
+            return hue
+        print(f"hue changing type {self._hue_change_type} not recognized, not changing hue.")
+        return hue
 
 class ElgatoApi:
     def __init__(self, config: ElgatoConfig):
+        self._config = config
         self._endpoints = Endpoints(config.base_url)
         self._light_id = 0
-        self._verbose = config.verbose
 
         self._session = requests.session()
         self._session.mount('https://', FixedTimeoutAdapter())
@@ -89,32 +101,15 @@ class ElgatoApi:
         response.raise_for_status()
         data = response.json()
         return data['lights'][self._light_id]
-
-    def toggle_lights(self):
-        data = self.get_light_raw()
-        for i in range(360):
-            data['hue'] = i
-            print(json.dumps(data))
-            response = self._session.put(self._endpoints.lights, json={'lights': [data]})
-            response.raise_for_status()
-
-    def toggle_random(self):
-        data = self.get_light_raw()
-        for i in range(500):
-            data['hue'] = random.randint(0, 359)
-            print(json.dumps(data))
-            response = self._session.put(self._endpoints.lights, json={'lights': [data]})
-            response.raise_for_status()
-
+    
     def run(self):
         while True:
             data = self.get_light_raw()
-            for i in range(360):
-                if (self._verbose):
-                    print(json.dumps(data))
-                data['hue'] = i
-                response = self._session.put(self._endpoints.lights, json={'lights': [data]})
-                response.raise_for_status()
+            if (self._config.verbose):
+                print(json.dumps(data))
+            data['hue'] = self._config.get_next_hue(data['hue'])
+            response = self._session.put(self._endpoints.lights, json={'lights': [data]})
+            response.raise_for_status()
 
 
 def main():
@@ -129,7 +124,11 @@ def main():
 
     with open(args.config, "r") as f:
         yml_config = yaml.safe_load(f)
-        conf = ElgatoConfig(yml_config)
+        conf = ElgatoConfig(yml_config, args.mode)
+
+    if args.mode not in yml_config['modes'].keys():
+        print(f"mode {args.mode} not specified in config. Exiting")
+        sys.exit(2)
 
     api = ElgatoApi(conf)
     api.run()
