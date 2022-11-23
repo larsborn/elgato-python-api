@@ -70,10 +70,11 @@ class ElgatoConfig:
     def __init__(self, yml_config: dict, mode: str):
         self._ip = yml_config['ip']
         self.base_url = f"http://{self._ip}:9123"
+        self.verbose = yml_config['verbose']
+
         self._colors = yml_config['colors']
         self._mode = yml_config['modes'][mode]
         self._hue_change_type = self.mode['type']
-        self.verbose = yml_config['verbose']
 
     def get_next_hue(self, hue: int):
         if self._hue_change_type == 'random':
