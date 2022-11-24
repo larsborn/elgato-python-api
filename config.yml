@@ -10,7 +10,14 @@ modes:
     colors:
       - red
       - green
+  wild:
+    type: 'linear'
+    colors:
+      - red
+      - green
+      - blue
 colors:
   red: 255, 0, 0
   green: 0, 255, 0
+  blue: 0, 0, 255
 verbose: true
