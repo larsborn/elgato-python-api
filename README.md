@@ -28,5 +28,9 @@ Define modes with custom names. Every mode needs to define a type, currently the
 - rotate
 - linear
 
+`random` just selects a random hue.
+
+`rotate` cycles through the hues from 0 to 255.
+
 `linear` cycles through the specified colors with linear interpolation. You can change the amount of steps between colors by adding `steps: amount` to the mode definition.
 
