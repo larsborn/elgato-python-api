@@ -13,7 +13,9 @@ Install all the requirements
 ```
 pip install -r requirements.txt
 ```
-Find the IP of your Elgato Light Strip, e.g. `192.168.178.64`, and put it into the `config.yml`. Run the script: `python main.py --config config.yml`. Specify a mode from the config with `--mode`, e.g. `--mode random`. See below to add custom modes.
+Find the IP of your Elgato Light Strip, e.g. `192.168.178.64`, and put it into the `config.yml`. Run the script: 
+```python main.py --config config.yml```
+Specify a mode from the config with `--mode`, e.g. `--mode random`. See below to add custom modes.
 
 ## Adding colors and modes
 
