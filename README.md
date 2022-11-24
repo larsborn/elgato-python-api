@@ -1,11 +1,32 @@
 # elgato-python-api
 
-A simple API to control an Elgato Light Strip from the CLI. Currently the script either cycles through the hue from 0 to 359 or changes the hue randomly. Saturation and brigthness are kept as is.
+A simple API to control an Elgato Light Strip from the CLI. Configure modes with a yaml file and run the strip with the desired colors.
 
 ## Getting started
 
-Find the IP of your Elgato Light Strip, e.g. `192.168.178.64`. 
+Create a virtual environment with a method of your choice and activate it, e.g.
+```
+python3 -m venv env
+. env/bin/activate
+```
+Install all the requirements
+```
+pip install -r requirements.txt
+```
+Find the IP of your Elgato Light Strip, e.g. `192.168.178.64`, and put it into the `config.yml`. Run the script: `python main.py --config config.yml`. Specify a mode from the config with `--mode`, e.g. `--mode random`. See below to add custom modes.
 
-Run the script: `python3 main.py --base-url "http://192.168.178.64:9123"`. If you want the colors to be selected randomly, add the `--random` flag: 
+## Adding colors and modes
 
-`python3 main.py --base-url "http://192.168.178.64:9123" --random`.
+### Colors
+
+Add colors by expanding the `colors` dictionary in the config file. The syntax is `colorname : r,g,b` with values in `[0,255]`.
+
+### Modes
+
+Define modes with custom names. Every mode needs to define a type, currently there are
+- random
+- rotate
+- linear
+
+`linear` cycles through the specified colors with linear interpolation. You can change the amount of steps between colors by adding `steps: amount` to the mode definition.
+
