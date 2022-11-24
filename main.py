@@ -4,11 +4,9 @@ import json
 import os
 import random
 import yaml, sys
-from typing import Dict
 import colour
-
 import requests.adapters
-
+from typing import Dict
 
 class FixedTimeoutAdapter(requests.adapters.HTTPAdapter):
     def send(self, *pargs, **kwargs):
@@ -70,27 +68,39 @@ class Endpoints:
 class ColorRotator:
     def __init__(self, colors_from_config: dict, mode: dict):
         self._step = 0
-        self._gradient_steps = 10
+        self._gradient_steps = 10 # amount of steps between colors
+
         # prepare our color dictionary from config
         self._colors = {}
         for k, v in colors_from_config.items():
             r, g, b = map(int, v.split(','))
             self._colors[k] = colour.Color(rgb=(r/255,g/255,b/255))
 
-        # create the gradients:
+        # create the gradients
         gradient_color_generators = []
-        for i in range(len(mode['colors']) - 1):
-            c1 = self._colors[mode['colors'][i]]
-            c2 = self._colors[mode['colors'][i + 1]]
-            gradient_color_generators.append(c1.range_to(c2, self._gradient_steps))
+        color_amt = len(mode['colors'])
+        for i in range(color_amt):
+            if i == color_amt - 1:
+                # we loop from the last color back to the first color
+                c1 = self._colors[mode['colors'][i]]
+                c2 = self._colors[mode['colors'][0]]
+            else:
+                c1 = self._colors[mode['colors'][i]]
+                c2 = self._colors[mode['colors'][i + 1]]
+            # this gets us all the elements of the given color iterator without the last element, otherwise we would have color duplications in our final list
+            # see https://stackoverflow.com/questions/2138873/cleanest-way-to-get-last-item-from-python-iterator
+            *iterator_without_last_element, _ = c1.range_to(c2, self._gradient_steps)
+            gradient_color_generators.append(iterator_without_last_element)
+        # again just flatten the nested lists to our final list
         self._color_rotation = []
         for range_generator in gradient_color_generators:
             for color in range_generator:
                 self._color_rotation.append(color)
+        # print(self._color_rotation)
 
     def get_next_color(self):
         color = self._color_rotation[self._step]
-        self._step + 1
+        self._step += 1
         if self._step == len(self._color_rotation):
             self._step = 0
         return color
