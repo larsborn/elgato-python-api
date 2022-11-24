@@ -68,7 +68,10 @@ class Endpoints:
 class ColorRotator:
     def __init__(self, colors_from_config: dict, mode: dict):
         self._step = 0
-        self._gradient_steps = 10 # amount of steps between colors
+        if 'steps' in mode:
+            self._gradient_steps = mode['steps']
+        else:
+            self._gradient_steps = 10 # amount of steps between colors
 
         # prepare our color dictionary from config
         self._colors = {}
@@ -126,15 +129,15 @@ class ElgatoConfig:
                 self._mode)
             self.get_next_hue = self.get_next_hue_linear
 
-    def get_next_hue_random(self):
+    def get_next_hue_random(self, *args):
         return random.randint(0, 359)
 
     def get_next_hue_rotate(self, hue: int):
         return (hue + 1) % 360
 
-    def get_next_hue_linear(self):
+    def get_next_hue_linear(self, *args):
         color = self._colorRotator.get_next_color()
-        return color.hue * 360
+        return color.hue * 359 # colour.Color works from 0 to 1, light strip hue is from 0 to 359
 
 class ElgatoApi:
     def __init__(self, config: ElgatoConfig):
@@ -186,7 +189,7 @@ def main():
     # flatten
     all_colors = [i for sublist in color_lists for i in sublist]
     for color in all_colors:
-        if color not in yml_config['colors'].keys():
+        if color not in yml_config['colors']:
             print(f"did not recognize color {color}, please define it in the config. Exiting")
             sys.exit(3)
     

@@ -1,5 +1,5 @@
 ---
-ip: '192.168.178.64'
+ip: '192.168.178.49'
 modes:
   random:
     type: 'random'
@@ -10,6 +10,7 @@ modes:
     colors:
       - red
       - green
+    steps: 50 # default is 10 steps
   wild:
     type: 'linear'
     colors:
