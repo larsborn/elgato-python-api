@@ -3,10 +3,13 @@ import argparse
 import json
 import os
 import random
-import yaml, sys
+from typing import Dict
+
 import colour
 import requests.adapters
-from typing import Dict
+import sys
+import yaml
+
 
 class FixedTimeoutAdapter(requests.adapters.HTTPAdapter):
     def send(self, *pargs, **kwargs):
@@ -65,19 +68,20 @@ class Endpoints:
         }
         """
 
+
 class ColorRotator:
     def __init__(self, colors_from_config: dict, mode: dict):
         self._step = 0
         if 'steps' in mode:
             self._gradient_steps = mode['steps']
         else:
-            self._gradient_steps = 10 # amount of steps between colors
+            self._gradient_steps = 10  # amount of steps between colors
 
         # prepare our color dictionary from config
         self._colors = {}
         for k, v in colors_from_config.items():
             r, g, b = map(int, v.split(','))
-            self._colors[k] = colour.Color(rgb=(r/255,g/255,b/255))
+            self._colors[k] = colour.Color(rgb=(r / 255, g / 255, b / 255))
 
         # create the gradients
         gradient_color_generators = []
@@ -108,6 +112,7 @@ class ColorRotator:
             self._step = 0
         return color
 
+
 class ElgatoConfig:
     def __init__(self, yml_config: dict, mode: str):
         self._ip = yml_config['ip']
@@ -137,7 +142,8 @@ class ElgatoConfig:
 
     def get_next_hue_linear(self, *args):
         color = self._colorRotator.get_next_color()
-        return color.hue * 359 # colour.Color works from 0 to 1, light strip hue is from 0 to 359
+        return color.hue * 359  # colour.Color works from 0 to 1, light strip hue is from 0 to 359
+
 
 class ElgatoApi:
     def __init__(self, config: ElgatoConfig):
@@ -154,7 +160,7 @@ class ElgatoApi:
         response.raise_for_status()
         data = response.json()
         return data['lights'][self._light_id]
-    
+
     def run(self):
         while True:
             data = self.get_light_raw()
@@ -163,6 +169,7 @@ class ElgatoApi:
             data['hue'] = self._config.get_next_hue(data['hue'])
             response = self._session.put(self._endpoints.lights, json={'lights': [data]})
             response.raise_for_status()
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -192,11 +199,12 @@ def main():
         if color not in yml_config['colors']:
             print(f"did not recognize color {color}, please define it in the config. Exiting")
             sys.exit(3)
-    
+
     # create config obj and api, run it
     conf = ElgatoConfig(yml_config, args.mode)
     api = ElgatoApi(conf)
     api.run()
+
 
 if __name__ == '__main__':
     main()
